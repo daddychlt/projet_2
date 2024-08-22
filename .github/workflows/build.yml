@@ -1,70 +1,31 @@
-name: CI
-
-on:
-  push:
-    branches: [ main ]
-
+# Tested: 2024/08/05
+# by Kasper Arfman
+name: Build APK
+on: [push]
 jobs:
-  build:
-    runs-on: ubuntu-20.04
-
+  build-android:
+    name: Build for Android
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
 
-      # Cache Buildozer global directory
-      - name: Cache Buildozer global directory
-        uses: actions/cache@v2
-        with:
-          path: .buildozer_global
-          key: buildozer-global-${{ hashFiles('buildozer.spec') }}
-
-      # Cache the build directory
-      - uses: actions/cache@v2
-        with:
-          path: .buildozer
-          key: ${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
-
-      # Install dependencies required for Buildozer
-      - name: Install dependencies
+      - name: Buildozer dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            python3-pip \
-            python3-setuptools \
-            python3-wheel \
-            openjdk-8-jdk \
-            zlib1g-dev \
-            libncurses5-dev \
-            libbz2-dev \
-            libsqlite3-dev \
-            libgdbm-dev \
-            liblzma-dev \
-            libffi-dev \
-            libssl-dev \
-            build-essential \
-            libgl1-mesa-dev \
-            libgl1-mesa-dri \
-            git
-          pip3 install --upgrade cython buildozer
+          sudo apt update
+          sudo apt install -y git zip unzip python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev automake
+          pip install --user --upgrade Cython virtualenv
+          pip install --user --upgrade buildozer
+          echo 'export PATH=$PATH:~/.local/bin/' >> ~/.bashrc
 
-      # Download and set up Android SDK
-      - name: Set up Android SDK
+      - name: Handle Java path
         run: |
-          wget https://dl.google.com/android/repository/commandlinetools-linux-8092744_latest.zip -O sdk-tools.zip
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          unzip sdk-tools.zip -d $HOME/android-sdk/cmdline-tools
-          mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-          export ANDROID_HOME=$HOME/android-sdk
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "cmdline-tools;latest" "ndk;21.3.6528147"
+          export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64
+          sudo update-java-alternatives --set ${JAVA_HOME}
+          export PATH=$JAVA_HOME/bin:$PATH
+          yes | buildozer -v android debug
 
-      # Build the APK with Buildozer
-      - name: Build with Buildozer
-        run: buildozer android debug
-
-      # Upload the APK as an artifact
-      - name: Upload APK
+      - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: package
