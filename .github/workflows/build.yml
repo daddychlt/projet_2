@@ -11,14 +11,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # Cache Buildozer global directory
+      # Step to cache the Buildozer global directory
       - name: Cache Buildozer global directory
         uses: actions/cache@v2
         with:
           path: .buildozer_global
           key: buildozer-global-${{ hashFiles('buildozer.spec') }}
 
-      # Cache the build directory
+      # Step to cache the build directory
       - uses: actions/cache@v2
         with:
           path: .buildozer
@@ -46,11 +46,6 @@ jobs:
             libgl1-mesa-dri \
             git
           pip3 install --upgrade cython buildozer
-
-      # Accept Android SDK Licenses
-      - name: Accept Android SDK licenses
-        run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       # Build the APK with Buildozer
       - name: Build with Buildozer
