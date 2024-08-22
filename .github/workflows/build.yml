@@ -47,15 +47,17 @@ jobs:
             git
           pip3 install --upgrade cython buildozer
 
-      # Download and configure Android SDK
+      # Download and set up Android SDK
       - name: Set up Android SDK
         run: |
           wget https://dl.google.com/android/repository/commandlinetools-linux-8092744_latest.zip -O sdk-tools.zip
-          unzip sdk-tools.zip -d $HOME/android-sdk
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          unzip sdk-tools.zip -d $HOME/android-sdk/cmdline-tools
+          mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
           export ANDROID_HOME=$HOME/android-sdk
-          export PATH=$ANDROID_HOME/cmdline-tools/bin:$PATH
-          yes | $ANDROID_HOME/cmdline-tools/bin/sdkmanager --licenses
-          $ANDROID_HOME/cmdline-tools/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "cmdline-tools;latest" "ndk;21.3.6528147" "build-tools;35.0.0"
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;21.3.6528147" "build-tools;35.0.0"
 
       # Build the APK with Buildozer
       - name: Build with Buildozer
