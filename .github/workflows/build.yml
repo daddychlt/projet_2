@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # Step to cache the Buildozer global directory
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v2
+        with:
+          path: .buildozer_global
+          key: buildozer-global-${{ hashFiles('buildozer.spec') }}
+
+      # Step to cache the build directory
+      - uses: actions/cache@v2
+        with:
+          path: .buildozer
+          key: ${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+
+      # Install dependencies required for Buildozer
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-pip \
+            python3-setuptools \
+            python3-wheel \
+            openjdk-8-jdk \
+            zlib1g-dev \
+            libncurses5-dev \
+            libbz2-dev \
+            libsqlite3-dev \
+            libgdbm-dev \
+            liblzma-dev \
+            libffi-dev \
+            libssl-dev \
+            build-essential \
+            libgl1-mesa-dev \
+            libgl1-mesa-dri \
+            git
+          pip3 install --upgrade cython buildozer
+
+      # Build the APK with Buildozer
+      - name: Build with Buildozer
+        run: buildozer android debug
+
+      # Upload the APK as an artifact
+      - name: Upload APK
+        uses: actions/upload-artifact@v2
+        with:
+          name: package
+          path: bin/*.apk
